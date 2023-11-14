@@ -7,6 +7,10 @@
 | 1    |Mohammad Zhafran Dzaky           | 5025211142   |
 | 2    | Katarina Inezita Prambudi         | 5025211148   |
 
+
+## Topologi Soal
+<img width="364" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/2b956bbd-e2e8-4d8d-8ce0-37e22be2328f">
+
 ## Penjelasan Soal
 ### Soal 0
 Setelah mengalahkan Demon King, perjalanan berlanjut. Kali ini, kalian diminta untuk melakukan register domain berupa riegel.canyon.yyy.com untuk worker PHP dan granz.channel.yyy.com untuk worker Laravel mengarah pada worker yang memiliki IP [prefix IP].x.1.
