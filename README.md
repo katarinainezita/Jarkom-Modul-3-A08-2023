@@ -341,7 +341,7 @@ b. Report hasil testing pada Apache Benchmark
 c. Grafik request per second untuk masing masing algoritma. 
 d. Analisis
 
-* Tes Least Connection
+* Tes Least Connection di lb eisen
 ```
 echo 'upstream worker {
         least_conn;
@@ -369,6 +369,116 @@ rm -rf /etc/nginx/sites-enabled/default
 service nginx restart
 nginx -t
 ```
+
+<img width="297" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/a0b0d2a9-8c25-40b0-baa7-d8e91f15dc03">
+<img width="297" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/07258598-d37e-44f8-82b4-4e2373e22689">
+<img width="296" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/106b26c8-7593-41e7-8113-0971df26347a">
+<img width="297" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/5e8f641f-f4cf-4cdd-8259-fb003ec69a4a">
+
+* Tes Least Connection Client
+```
+ab -n 200 -c 10 http://10.3.2.2/
+```
+
+* Cek Pembagian Load di Worker
+```
+cat /var/log/nginx/jarkom_access.log| grep "GET" | wc -l
+```
+
+<img width="297" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/db0c3155-805a-4779-932a-941c6caee2ec">
+<img width="554" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/80226a7b-c62c-4b3c-8343-113458e9bcb4">
+<img width="554" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/178f5031-1ba1-4c52-b01c-240b512ce419">
+<img width="560" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/9f6e833b-4636-4bac-8592-02ad2ceec1f9">
+
+* Tes IP Hash
+echo 'upstream worker {
+        ip_hash;
+        server 10.3.3.1;
+        server 10.3.3.2;
+        server 10.3.3.3;
+}
+
+server {
+        listen 80;
+        server_name granz.channel.a08.com;
+
+        location / {
+                proxy_pass http://worker;
+                proxy_set_header    X-Real-IP $remote_addr;
+                proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header    Host $http_host;
+        }
+}' > /etc/nginx/sites-available/lb-php
+
+unlink /etc/nginx/sites-enabled/lb-php
+ln -s /etc/nginx/sites-available/lb-php /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+
+* Tes IP hash
+```
+ab -n 200 -c 10 http://10.3.2.2/
+```
+
+* Cek Pembagian Load
+```
+cat /var/log/nginx/jarkom_access.log| grep "GET" | wc -l
+```
+
+<img width="297" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/13be4e2a-889f-4411-a525-75b2d69c9043">
+<img width="556" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/0c3a48d7-5d3f-4279-bcdc-1d7da3b2bbde">
+<img width="561" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/a08f847d-afc1-4b84-aae8-2d03dd5c7f93">
+<img width="558" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/24c6b15d-a437-4192-9ae8-6b1558e124f2">
+
+* Tes Generic Hash
+```
+echo 'upstream worker {
+        hash $request_uri consistent;
+        server 10.3.3.1;
+        server 10.3.3.2;
+        server 10.3.3.3;
+}
+
+server {
+        listen 80;
+        server_name granz.channel.a08.com;
+
+        location / {
+                proxy_pass http://worker;
+                proxy_set_header    X-Real-IP $remote_addr;
+                proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header    Host $http_host;
+        }
+}' > /etc/nginx/sites-available/lb-php
+
+unlink /etc/nginx/sites-enabled/lb-php
+ln -s /etc/nginx/sites-available/lb-php /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+
+```
+
+* Tes Generic Hash di Client
+```
+ab -n 200 -c 10 http://10.3.2.2/
+```
+
+* Cek Pembagian Load
+```
+cat /var/log/nginx/jarkom_access.log| grep "GET" | wc -l
+```
+
+<img width="299" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/4f73a220-bec6-4f1a-823e-e983416245da">
+<img width="560" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/9193b77b-cfe1-4a84-8719-40e50f020b33">
+<img width="556" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/f665382b-972b-4155-9125-52bbc0b0914f">
+<img width="558" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/49e8a09b-1401-4ae9-b0be-5e506b1293d6">
+<img width="560" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/e04ef965-305b-4d28-963f-c371298c556a">
+<img width="555" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/82b98998-85af-49d7-b29b-2977836a1d74">
+<img width="559" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/188c6c81-fe7d-4a78-9b5e-0c0627a2532e">
 
 
 
