@@ -328,6 +328,11 @@ echo '' > /var/log/nginx/jarkom_access.log
 cat /var/log/nginx/jarkom_access.log| grep "GET" | wc -l
 ```
 
+<img width="225" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/6d8a8715-ae6f-4b05-bf52-8016ad40e80e">
+
+* Bukti di Worker
+
+
 
 ### Soal 8
 Karena diminta untuk menuliskan grimoire, buatlah analisis hasil testing dengan 200 request dan 10 request/second masing-masing algoritma Load Balancer dengan ketentuan sebagai berikut:
