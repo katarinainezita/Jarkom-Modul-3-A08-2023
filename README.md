@@ -485,6 +485,28 @@ cat /var/log/nginx/jarkom_access.log| grep "GET" | wc -l
 ### Soal 9
 Dengan menggunakan algoritma Round Robin, lakukan testing dengan menggunakan 3 worker, 2 worker, dan 1 worker sebanyak 100 request dengan 10 request/second, kemudian tambahkan grafiknya pada grimoire.
 
+* 3 Worker
+<img width="336" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/16f60f78-e51d-4ae8-957a-928ff8cea79e">
+
+<img width="447" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/c3b230f9-44ba-4662-b06e-4cc4a60f3c44">
+
+<img width="448" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/f0389f9d-099a-4267-8d13-1208205a5621">
+
+<img width="447" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/e5bd972f-cf0e-4748-bc26-81c90687d1a8">
+
+* 2 Worker 
+<img width="352" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/ea98f4e6-2171-436c-ac5d-e22d4440b088">
+
+<img width="446" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/1c380c16-0ee5-4198-8c45-bf45a8055bec">
+
+<img width="448" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/faa854eb-f722-459d-a5a7-3ecde578d4b5">
+
+* 1 Worker
+<img width="332" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/859c0b62-dd8e-411f-98fd-1a8e70b3d3bc">
+
+![Uploading image.png…]()
+
+
 ### Soal 10
 Selanjutnya coba tambahkan konfigurasi autentikasi di LB dengan dengan kombinasi username: “netics” dan password: “ajkyyy”, dengan yyy merupakan kode kelompok. Terakhir simpan file “htpasswd” nya di /etc/nginx/rahasisakita/
 
