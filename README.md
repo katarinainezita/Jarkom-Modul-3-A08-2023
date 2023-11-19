@@ -504,36 +504,333 @@ Dengan menggunakan algoritma Round Robin, lakukan testing dengan menggunakan 3 w
 * 1 Worker
 <img width="332" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/859c0b62-dd8e-411f-98fd-1a8e70b3d3bc">
 
-![Uploading image.png…]()
+<img width="338" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/692efad2-cedd-423d-b408-b5b04eb271e8">
 
 
 ### Soal 10
 Selanjutnya coba tambahkan konfigurasi autentikasi di LB dengan dengan kombinasi username: “netics” dan password: “ajkyyy”, dengan yyy merupakan kode kelompok. Terakhir simpan file “htpasswd” nya di /etc/nginx/rahasisakita/
 
+* Setup lb Eisen
+```
+echo 'upstream worker {
+        server 10.3.3.1;
+        server 10.3.3.2;
+        server 10.3.3.3;
+}
+
+server {
+        listen 80;
+        server_name granz.channel.a08.com;
+
+        location / {
+                proxy_pass http://worker;
+                auth_basic "Restricted Area";
+                auth_basic_user_file /etc/nginx/rahasiakita/.htpasswd;
+        }
+        location ~ /\.ht {
+                deny all;
+        }
+}' > /etc/nginx/sites-available/lb-php
+
+mkdir /etc/nginx/rahasiakita/
+
+htpasswd -c -b /etc/nginx/rahasiakita/.htpasswd netics ajka08
+
+service nginx restart
+nginx -t
+```
+
 ### Soal 11
 Lalu buat untuk setiap request yang mengandung /its akan di proxy passing menuju halaman https://www.its.ac.id.
 
+* Setup lb eisen
+```
+echo 'upstream worker {
+        server 10.3.3.1;
+        server 10.3.3.2;
+        server 10.3.3.3;
+}
+
+server {
+        listen 80;
+        server_name granz.channel.a08.com;
+
+        location / {
+                proxy_pass http://worker;
+        }
+        location ~* /its {
+                proxy_pass https://www.its.ac.id;
+        }
+}' > /etc/nginx/sites-available/lb-php
+
+service nginx restart
+nginx -t
+```
+
 ### Soal 12
-Selanjutnya LB ini hanya boleh diakses oleh client dengan IP [Prefix IP.3.69], [Prefix IP.3.70], [Prefix IP.4.167], dan [Prefix IP.4.168].
+Selanjutnya LB ini hanya boleh diakses oleh client dengan IP [10.3.3.69], [10.3.3.70], [10.3.4.167], dan [103.3.4.168].
 
 Karena para petualang kehabisan uang, mereka kembali bekerja untuk mengatur granz.channel.yyy.com.
 
-### Soal 13 
-Semua data yang diperlukan, diatur pada Denken dan harus dapat diakses oleh Frieren, Flamme, dan Fern.
+* Setup lb Eisen
+```
+echo 'upstream worker {
+        server 10.3.3.1;
+        server 10.3.3.2;
+        server 10.3.3.3;
+}
 
-### Soal 14 
+server {
+        listen 80;
+        server_name granz.channel.a08.com;
+
+        location / {
+                proxy_pass http://worker;
+
+                allow 10.3.3.69;
+                allow 10.3.3.70;
+                allow 10.3.4.167;
+                allow 10.3.4.168;
+                deny all;
+        }
+}' > /etc/nginx/sites-available/lb-php
+
+service nginx restart
+nginx -t
+```
+
+### Soal 13 & Soal 14
+Semua data yang diperlukan, diatur pada Denken dan harus dapat diakses oleh Frieren, Flamme, dan Fern. 
 Frieren, Flamme, dan Fern memiliki Granz Channel sesuai dengan quest guide berikut. Jangan lupa melakukan instalasi PHP8.0 dan Composer
-
 Granz Channel memiliki beberapa endpoint yang harus ditesting sebanyak 100 request dengan 10 request/second. Tambahkan response dan hasil testing pada grimoire.
+
+* Setup Database Denken
+
+```
+echo 'nameserver 10.3.1.2' > /etc/resolv.conf
+apt-get update && apt-get install mariadb-server -y
+
+service mysql start
+
+echo '
+[client-server]
+
+[mysqld]
+skip-networking=0
+skip-bind-address
+' >> /etc/mysql/my.cnf
+
+
+echo '
+# These groups are read by MariaDB server.
+# Use it for options that only the server (but not clients) should see
+
+# this is read by the standalone daemon and embedded servers
+[server]
+
+# this is only for the mysqld standalone daemon
+[mysqld]
+
+#
+# * Basic Settings
+#
+user                    = mysql
+pid-file                = /run/mysqld/mysqld.pid
+socket                  = /run/mysqld/mysqld.sock
+#port                   = 3306
+basedir                 = /usr
+datadir                 = /var/lib/mysql
+tmpdir                  = /tmp
+lc-messages-dir         = /usr/share/mysql
+
+
+bind-address            = 0.0.0.0
+query_cache_size        = 16M
+log_error               = /var/log/mysql/error.log
+expire_logs_days        = 10
+character-set-server    = utf8mb4
+collation-server        = utf8mb4_general_ci
+
+[embedded]
+
+[mariadb]
+
+[mariadb-10.3]' > /etc/mysql/mariadb.conf.d/50-server.cnf
+
+mysql << EOF
+
+CREATE USER 'kelompoka08'@'10.3.4.%' IDENTIFIED BY 'ajka08';
+CREATE USER 'kelompoka08'@'localhost' IDENTIFIED BY 'ajk08';
+CREATE DATABASE dbkelompoka08;
+GRANT ALL PRIVILEGES ON *.* TO 'kelompoka08'@'10.3.4.%';
+GRANT ALL PRIVILEGES ON *.* TO 'kelompoka08'@'localhost';
+FLUSH PRIVILEGES;
+
+EOF
+```
+
+* Jika sudah pernah membuat database dan isinya, reset script menggunakan script di bawah ini
+```
+mysql << EOF
+
+DROP USER 'kelompoka08'@'10.3.4.%';
+DROP USER 'kelompoka08'@'localhost';
+DROP DATABASE dbkelompoka08;
+
+EOF
+```
+
+* Setup Worker Laravel (Frieren, Flamme, Fern)
+
+```
+echo 'nameserver 10.3.1.2' > /etc/resolv.conf
+rm /etc/apt/sources.list.d/php.list
+
+apt-get update && apt-get install mariadb-client -y
+apt-get install -y lsb-release ca-certificates apt-transport-https software-properties-common gnupg2
+curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
+sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
+
+apt-get update
+apt-get install php8.0-mbstring php8.0-xml php8.0-cli php8.0-common php8.0-intl php8.0-opcache php8.0-readline php8.0-mysql php8.0-fpm php8.0-curl unzip wget -y
+
+php --version
+
+apt-get install nginx -y
+wget https://getcomposer.org/download/2.0.13/composer.phar
+chmod +x composer.phar
+mv composer.phar /usr/bin/composer
+
+composer -V
+
+apt-get install git -y
+cd /var/www/
+git clone https://github.com/martuafernando/laravel-praktikum-jarkom.git
+composer install
+
+cd /var/www/laravel-praktikum-jarkom
+cp .env.example .env
+echo 'APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost
+
+LOG_CHANNEL=stack
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST=10.3.2.1
+DB_PORT=3306
+DB_DATABASE=dbkelompoka08
+DB_USERNAME=kelompoka08
+DB_PASSWORD=ajka08
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=file
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=sync
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+
+MEMCACHED_HOST=127.0.0.1
+
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=smtp
+MAIL_HOST=mailpit
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=
+AWS_USE_PATH_STYLE_ENDPOINT=false
+
+PUSHER_APP_ID=
+PUSHER_APP_KEY=
+PUSHER_APP_SECRET=
+PUSHER_HOST=
+PUSHER_PORT=443
+PUSHER_SCHEME=https
+PUSHER_APP_CLUSTER=mt1
+
+VITE_PUSHER_APP_KEY="${PUSHER_APP_KEY}"
+VITE_PUSHER_HOST="${PUSHER_HOST}"
+VITE_PUSHER_PORT="${PUSHER_PORT}"
+VITE_PUSHER_SCHEME="${PUSHER_SCHEME}"
+VITE_PUSHER_APP_CLUSTER="${PUSHER_APP_CLUSTER}"' > .env
+
+composer update
+
+php artisan migrate:fresh
+php artisan db:seed --class=AiringsTableSeeder
+php artisan key:generate
+php artisan jwt:secret
+```
+
+* Setup script untuk connect ke database :
+```
+mariadb --host=10.3.2.1 --port=3306 --user=kelompoka08 --password=ajka08
+```
 
 ### Soal 15
 POST /auth/register
 
+* Test menggunakan AB :
+```
+ab -n 100 -c 10 -T 'application/json' -p register_data.json -g register_result.data http://10.3.4.1:8001/api/auth/register
+```
+
+<img width="337" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/6ab0e334-f5ae-4170-bc99-285f0c74a4fc">
+
+* Test menggunakan curl
+```
+curl -X POST -H "Content-Type: application/json" -d '{"username": "zen", "password": "bismillah"}' http://10.3.4.1:8001/api/auth/register
+```
+
+<img width="335" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/ba9f430c-3679-4963-8724-d926e046e682">
+
+
 ### Soal 16 
 POST /auth/login
 
+* Test Menggunakan AB
+```
+ab -n 100 -c 10 -T 'application/json' -p login_data.json -g login_result.data http://10.3.4.1:8001/api/auth/login
+```
+
+<img width="451" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/a74b145f-8a6c-4925-a4b3-cc13e8fd344a">
+
+* Test Menggunakan Curl
+```
+curl -X POST -H "Content-Type: application/json" -d '{"username": "zen", "password": "bismillah"}' http://10.3.4.1:8001/api/auth/login
+```
+
+<img width="404" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/29b7a133-da2a-489e-a4d3-87c45405df1a">
+
 ### Soal 17
 GET /me
+
+* Test Menggunakan AB :
+```
+token=$(cat temp_token.txt); ab -n 100 -c 10 -H "Authorization: Bearer $token" http://10.3.4.1:8001/api/me
+```
+
+<img width="560" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/9d7b6226-c1ea-4a2c-a58b-8ebe53e83ecc">
+
+* Cek di database (Frieren)
+
+<img width="300" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/f63d954d-46fa-4078-a89a-3cdde93fa3bf">
+
 
 ### Soal 18
 Untuk memastikan ketiganya bekerja sama secara adil untuk mengatur Granz Channel maka implementasikan Proxy Bind pada Eisen untuk mengaitkan IP dari Frieren, Flamme, dan Fern.
@@ -546,5 +843,89 @@ Untuk meningkatkan performa dari Worker, coba implementasikan PHP-FPM pada Frier
 - pm.max_spare_servers
 sebanyak tiga percobaan dan lakukan testing sebanyak 100 request dengan 10 request/second kemudian berikan hasil analisisnya pada Grimoire.
 
+* Setup lb Eisen untuk Deploy Riegel menggunakan worker laravel :
+```
+touch /etc/nginx/sites-available/lb-laravel
+
+echo 'upstream laravel {
+        server 10.3.4.1:8001;
+        server 10.3.4.2:8002;
+        server 10.3.4.3:8003;
+}
+
+server {
+        listen 80;
+        server_name riegel.canyon.a08.com;
+
+        location / {
+                proxy_bind 10.3.2.2;
+                proxy_pass http://laravel;
+        }
+}' > /etc/nginx/sites-available/lb-laravel
+
+ln -s /etc/nginx/sites-available/lb-laravel /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+
+* Hasil Work 1
+<img width="299" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/085d8347-98ae-47dd-a382-62300bba4e1e">
+
+
+* Hasil Work 2
+<img width="360" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/d2e322d9-a263-491b-9fdd-b92791079f8a">
+
+
+* Hasil Work 3
+<img width="361" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/b5155353-e0dc-4a46-b541-46b87c2b8c1e">
+
+* Hasil Work 4
+<img width="361" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/f03a7e27-981f-441a-b4e8-4426cb8e0b9a">
+
 ### Soal 20
 Nampaknya hanya menggunakan PHP-FPM tidak cukup untuk meningkatkan performa dari worker maka implementasikan Least-Conn pada Eisen. Untuk testing kinerja dari worker tersebut dilakukan sebanyak 100 request dengan 10 request/second.
+
+* Setup lb Eisen menggunakan Least Connection :
+```
+touch /etc/nginx/sites-available/lb-laravel
+
+echo 'upstream laravel {
+        least_conn;
+        server 10.3.4.1:8001;
+        server 10.3.4.2:8002;
+        server 10.3.4.3:8003;
+}
+
+server {
+        listen 80;
+        server_name riegel.canyon.a08.com;
+
+        location / {
+                proxy_pass http://laravel;
+        }
+}' > /etc/nginx/sites-available/lb-laravel
+
+ln -s /etc/nginx/sites-available/lb-laravel /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+
+* Testing menggunakan work 3 sebelumnya
+<img width="298" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/f85c7634-3565-4982-8009-cf7e0fcaab88">
+
+
+<img width="295" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/b1af2b9f-a080-4d24-813a-e0bbae1c3b13">
+
+
+<img width="286" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/78c1e1c7-22f7-4f12-8d8e-56d238c0f797">
+
+
+<img width="258" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/3779a50f-e96f-4ea6-a7c2-d7bad66e0993">
+
+
+![Uploading image.png…]()
+
