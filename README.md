@@ -332,7 +332,7 @@ cat /var/log/nginx/jarkom_access.log| grep "GET" | wc -l
 
 * Bukti di Worker
 
-
+<img width="502" alt="image" src="https://github.com/katarinainezita/Jarkom-Modul-3-A08-2023/assets/109232320/f78439e8-b9c0-4691-8690-4734ad88aec5">
 
 ### Soal 8
 Karena diminta untuk menuliskan grimoire, buatlah analisis hasil testing dengan 200 request dan 10 request/second masing-masing algoritma Load Balancer dengan ketentuan sebagai berikut:
@@ -340,6 +340,37 @@ a. Nama Algoritma Load Balancer
 b. Report hasil testing pada Apache Benchmark
 c. Grafik request per second untuk masing masing algoritma. 
 d. Analisis
+
+* Tes Least Connection
+```
+echo 'upstream worker {
+        least_conn;
+        server 10.3.3.1;
+        server 10.3.3.2;
+        server 10.3.3.3;
+}
+
+server {
+        listen 80;
+        server_name granz.channel.a08.com;
+
+        location / {
+                proxy_pass http://worker;
+                proxy_set_header    X-Real-IP $remote_addr;
+                proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header    Host $http_host;
+        }
+}' > /etc/nginx/sites-available/lb-php
+
+unlink /etc/nginx/sites-enabled/lb-php
+ln -s /etc/nginx/sites-available/lb-php /etc/nginx/sites-enabled
+rm -rf /etc/nginx/sites-enabled/default
+
+service nginx restart
+nginx -t
+```
+
+
 
 ### Soal 9
 Dengan menggunakan algoritma Round Robin, lakukan testing dengan menggunakan 3 worker, 2 worker, dan 1 worker sebanyak 100 request dengan 10 request/second, kemudian tambahkan grafiknya pada grimoire.
